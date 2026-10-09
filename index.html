@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Familia - Notificaciones</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@600;800&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Inter',sans-serif;background:#f6f5f2}
+header{padding:14px 18px;display:flex;justify-content:space-between;align-items:center;background:white;border-bottom:1px solid #eee;position:sticky;top:0;z-index:10}
+.pill{padding:6px 11px;border-radius:999px;font-size:11px;font-weight:800;color:white;border:none;cursor:pointer}
+.Cecilia{background:#ff7ab6}.Yo{background:#111}.Juani{background:#4f8cff}.Agus{background:#0a7d3e}.Gonza{background:#ff9f1c}
+.grid{display:grid;grid-template-columns:1fr;gap:12px;padding:12px} @media(min-width:900px){.grid{grid-template-columns:340px 1fr}}
+.card{background:white;border-radius:18px;border:1px solid #eee;padding:14px}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-top:10px}
+.dia{aspect-ratio:1/1;border-radius:10px;border:1px solid #f0f0f0;padding:5px;font-size:11px;cursor:pointer;background:white}
+.dia.hoy{border:2px solid #111;font-weight:800}.dia.tiene{background:#fff7e6}
+.evento{font-size:9px;padding:2px 4px;border-radius:5px;color:white;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.input{width:100%;padding:11px 12px;border-radius:12px;border:1px solid #e5e5e5;margin-top:8px;font-size:13px}
+.btn{width:100%;padding:12px;border-radius:999px;border:none;background:#111;color:white;font-weight:800;margin-top:10px;cursor:pointer}
+.item{padding:10px 12px;border-radius:12px;border:1px solid #eee;display:flex;justify-content:space-between;align-items:center;margin-top:6px}
+.noti-box{background:#111;color:white;border-radius:12px;padding:10px 12px;display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+</style>
+</head>
+<body>
+<header>
+  <div><b>FAMILIA APP</b><div style="font-size:11px;opacity:.6">Con notificaciones</div></div>
+  <div id="status" style="font-size:11px;color:#0a7d3e">● Sincronizado</div>
+</header>
+<div class="grid">
+  <div>
+    <div class="card">
+      <div id="permisoBox" class="noti-box" style="display:none"><span style="font-size:12px">🔔 Activar notificaciones</span><button onclick="pedirPermiso()" style="padding:6px 10px;border-radius:999px;border:none;background:white;font-weight:700;font-size:11px">Activar</button></div>
+      <h3 style="font-size:14px">+ Nueva actividad / turno</h3>
+      <select id="quien" class="input"><option>Cecilia</option><option selected>Yo</option><option>Juani</option><option>Agus</option><option>Gonza</option></select>
+      <input id="titulo" class="input" placeholder="Ej: Turno médico Gonza - Dentista">
+      <select id="tipo" class="input"><option value="medico">🏥 Turno médico</option><option value="escuela">📚 Escuela</option><option value="trabajo">💼 Trabajo</option><option value="casa">🏠 Casa</option><option value="otro">📌 Otro</option></select>
+      <input id="fecha" type="date" class="input"><input id="hora" type="time" class="input"><input id="lugar" class="input" placeholder="Lugar / Dirección">
+      <button class="btn" onclick="guardar()">Guardar para todos</button>
+    </div>
+    <div class="card" style="margin-top:10px">
+      <h4 style="font-size:12px">Ver solo a:</h4>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">
+        <button class="pill" style="background:#111" onclick="filtrar('todos')">Todos</button>
+        <button class="pill Cecilia" onclick="filtrar('Cecilia')">Cecilia</button>
+        <button class="pill Yo" onclick="filtrar('Yo')">Yo</button>
+        <button class="pill Juani" onclick="filtrar('Juani')">Juani</button>
+        <button class="pill Agus" onclick="filtrar('Agus')">Agus</button>
+        <button class="pill Gonza" onclick="filtrar('Gonza')">Gonza</button>
+      </div>
+    </div>
+  </div>
+  <div>
+    <div class="card">
+      <div style="display:flex;justify-content:space-between"><h3 id="mesLabel"></h3><div><button onclick="cambiarMes(-1)" style="padding:6px 10px;border-radius:999px;border:1px solid #eee;background:white">‹</button><button onclick="cambiarMes(1)" style="padding:6px 10px;border-radius:999px;border:1px solid #eee;background:white">›</button></div></div>
+      <div class="cal" id="cal"></div>
+    </div>
+    <div class="card" style="margin-top:10px"><h3 style="font-size:14px">Agenda <span id="filtroLabel" style="font-size:11px;opacity:.5"></span></h3><div id="lista"></div></div>
+  </div>
+</div>
+<script>
+const API_URL = "https://script.google.com/macros/s/AKfycbxXwcFMW8BUiXQoLi3i2gT9KDXkxFpj1MK1VHMZa7-YyY7QCR7JB-hI6hAGdz9FkW0/exec";
+const CACHE_KEY = 'familia_cache_v1';
+const colores = {Cecilia:'#ff7ab6',Yo:'#111',Juani:'#4f8cff',Agus:'#0a7d3e',Gonza:'#ff9f1c'};
+let actividades = []; let mesActual = new Date(); mesActual.setDate(1); let filtro='todos';
+
+// NOTIFICACIONES
+function pedirPermiso(){ Notification.requestPermission().then(p=>{ if(p==='granted'){ document.getElementById('permisoBox').style.display='none'; programarNotis(); } }); }
+function checkPermiso(){ if('Notification' in window && Notification.permission!=='granted'){ document.getElementById('permisoBox').style.display='flex'; } }
+function notificar(titulo, body){
+  if(Notification.permission==='granted'){
+    new Notification(titulo, {body, icon:'https://cdn-icons-png.flaticon.com/512/3652/3652191.png'});
+  }
+}
+function programarNotis(){
+  // Chequea cada 10 minutos
+  setInterval(()=>{
+    const ahora = new Date();
+    actividades.forEach(a=>{
+      if(!a.fecha || !a.hora) return;
+      const fechaHora = new Date(a.fecha + 'T' + a.hora);
+      const diffMin = (fechaHora - ahora) / 60000;
+      // 60 min antes
+      if(diffMin > 55 && diffMin < 65){
+        const key = 'noti_60_'+a.id; if(localStorage.getItem(key)) return;
+        notificar(`En 1 hora: ${a.quien}`, `${a.titulo} - ${a.lugar||''}`);
+        localStorage.setItem(key,'1');
+      }
+      // Noche anterior 20hs - avisa lo de mañana
+      if(ahora.getHours()===20){
+        const manana = new Date(); manana.setDate(manana.getDate()+1);
+        const mananaStr = manana.toISOString().slice(0,10);
+        if(String(a.fecha).slice(0,10)===mananaStr){
+          const key = 'noti_20_'+a.id+'_'+mananaStr; if(localStorage.getItem(key)) return;
+          notificar(`Mañana: ${a.quien}`, `${a.hora.slice(0,5)} - ${a.titulo}`);
+          localStorage.setItem(key,'1');
+        }
+      }
+    });
+  }, 600000);
+}
+
+function renderCache(d){ actividades=d.actividades||[]; render(); }
+async function cargar(){
+  try{ const c=localStorage.getItem(CACHE_KEY); if(c) renderCache(JSON.parse(c)); }catch{}
+  try{
+    const r=await fetch(API_URL,{cache:'no-store'}); const d=await r.json();
+    actividades=d.actividades||[]; localStorage.setItem(CACHE_KEY, JSON.stringify(d)); render();
+    document.getElementById('status').textContent='● Sincronizado';
+  }catch(e){ document.getElementById('status').textContent='● Offline'; if(!localStorage.getItem(CACHE_KEY)) render(); }
+}
+function render(){
+  const y=mesActual.getFullYear(), m=mesActual.getMonth();
+  document.getElementById('mesLabel').textContent = mesActual.toLocaleDateString('es-AR',{month:'long',year:'numeric'});
+  const primerDia = new Date(y,m,1).getDay(); const diasMes = new Date(y,m+1,0).getDate();
+  let html=''; ['D','L','M','M','J','V','S'].forEach(d=> html+=`<div style="font-size:10px;font-weight:800;opacity:.4;text-align:center">${d}</div>`);
+  for(let i=0;i<primerDia;i++) html+=`<div></div>`;
+  for(let d=1;d<=diasMes;d++){
+    const fechaStr = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const delDia = actividades.filter(a=>String(a.fecha).slice(0,10)===fechaStr && (filtro==='todos' || a.quien===filtro));
+    const hoy = new Date().toISOString().slice(0,10)===fechaStr? ' hoy' : '';
+    html+=`<div class="dia${delDia.length?' tiene':''}${hoy}" onclick="document.getElementById('fecha').value='${fechaStr}'"><b>${d}</b>${delDia.slice(0,3).map(a=>`<div class='evento' style='background:${colores[a.quien]||'#111'}'>${(a.hora||'').slice(0,5)} ${a.quien}</div>`).join('')}${delDia.length>3?`<div style='font-size:9px'>+${delDia.length-3}</div>`:''}</div>`;
+  }
+  document.getElementById('cal').innerHTML=html;
+  let listaFiltrada = actividades.filter(a=> filtro==='todos' || a.quien===filtro).sort((a,b)=> String(a.fecha).localeCompare(String(b.fecha)) || String(a.hora).localeCompare(String(b.hora)));
+  document.getElementById('lista').innerHTML = listaFiltrada.map(a=>`<div class="item"><div><div style="font-size:10px;opacity:.6;font-weight:800">${a.tipo} · ${a.quien} · ${String(a.fecha).slice(0,10)} ${String(a.hora).slice(0,5)}</div><div style="font-weight:700;font-size:13px">${a.titulo}</div><div style="font-size:11px;opacity:.6">${a.lugar||''}</div></div><button onclick="borrar('${a.id}')" style="border:none;background:#f5f5f5;border-radius:999px;padding:6px 8px;cursor:pointer">✕</button></div>`).join('') || '<div style="font-size:12px;opacity:.5;margin-top:8px">Sin actividades</div>';
+}
+function cambiarMes(d){ mesActual.setMonth(mesActual.getMonth()+d); render(); }
+function filtrar(q){ filtro=q; document.getElementById('filtroLabel').textContent = q==='todos'?'':'· '+q; render(); }
+async function guardar(){
+  const a = {action:'add', id:Date.now(), quien:document.getElementById('quien').value, titulo:document.getElementById('titulo').value, tipo:document.getElementById('tipo').value, fecha:document.getElementById('fecha').value, hora:document.getElementById('hora').value, lugar:document.getElementById('lugar').value};
+  if(!a.titulo||!a.fecha){ alert('Falta título o fecha'); return; }
+  document.getElementById('status').textContent='● Guardando...';
+  await fetch(API_URL,{method:'POST',mode:'no-cors',body:JSON.stringify(a)});
+  document.getElementById('titulo').value=''; document.getElementById('lugar').value='';
+  localStorage.removeItem(CACHE_KEY); setTimeout(cargar,1200);
+}
+async function borrar(id){ if(!confirm('¿Borrar?')) return; await fetch(API_URL,{method:'POST',mode:'no-cors',body:JSON.stringify({action:'delete', id})}); localStorage.removeItem(CACHE_KEY); setTimeout(cargar,1000); }
+cargar(); checkPermiso(); programarNotis();
+document.getElementById('fecha').value = new Date().toISOString().slice(0,10);
+</script>
+</body>
+</html>
