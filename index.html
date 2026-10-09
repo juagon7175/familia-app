@@ -17,10 +17,11 @@ header{padding:14px 18px;display:flex;justify-content:space-between;align-items:
 .evento{font-size:8px;padding:3px 5px;border-radius:6px;color:white;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:700}
 .input{width:100%;padding:11px 12px;border-radius:12px;border:1px solid #e5e5e5;margin-top:8px;font-size:13px}
 .btn{width:100%;padding:12px;border-radius:999px;border:none;background:#111;color:white;font-weight:800;margin-top:10px;cursor:pointer}
-.item{padding:10px 12px;border-radius:12px;border:1px solid #eee;display:flex;justify-content:space-between;align-items:center;margin-top:6px}
+.btn.sec{background:#eee;color:#111}
+.item{padding:10px 12px;border-radius:12px;border:1px solid #eee;display:flex;justify-content:space-between;align-items:center;margin-top:6px;gap:8px}
 .modal{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;z-index:50;padding:14px;overflow:auto}
 .modal.open{display:flex;align-items:flex-start;justify-content:center}
-.modalBox{background:white;border-radius:20px;width:100%;max-width:440px;padding:16px;margin-top:30px}
+.modalBox{background:white;border-radius:20px;width:100%;max-width:440px;padding:16px;margin-top:20px}
 .diasChk{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
 .diasChk label{font-size:11px;font-weight:700;border:1px solid #e5e5e5;border-radius:999px;padding:7px 10px;cursor:pointer}
 .diasChk input{display:none}.diasChk input:checked+span{background:#111;color:white;border-radius:999px;padding:7px 10px}
@@ -59,46 +60,71 @@ header{padding:14px 18px;display:flex;justify-content:space-between;align-items:
 <div style="display:flex;justify-content:space-between;align-items:center"><h2 id="modalTitle" style="font-size:18px"></h2><button onclick="cerrar()" style="border:none;background:#f2f2f2;border-radius:999px;padding:6px 10px">✕</button></div>
 <div id="horariosList" style="margin-top:12px"></div>
 <hr style="margin:14px 0;border:none;border-top:1px solid #eee">
-<h4 style="font-size:13px">+ Agregar horario fijo</h4>
+<h4 id="formTitle" style="font-size:13px">+ Agregar horario fijo</h4>
 <select id="h_tipo" class="input" onchange="toggleOtro()"><option value="colegio">🏫 Colegio</option><option value="futbol">⚽ Fútbol</option><option value="otro">📌 Otro</option></select>
 <input id="h_titulo" class="input" placeholder="Aclaración: Ej: Inglés, Catequesis" style="display:none">
 <div style="display:flex;gap:8px"><input id="h_ini" type="time" class="input"><input id="h_fin" type="time" class="input"></div>
 <input id="h_lugar" class="input" placeholder="Lugar / Cancha">
 <div style="font-size:11px;font-weight:700;margin-top:10px">¿Qué días se repite?</div>
-<div class="diasChk">
+<div class="diasChk" id="diasBox">
 <label><input type="checkbox" value="1"><span>LUN</span></label><label><input type="checkbox" value="2"><span>MAR</span></label><label><input type="checkbox" value="3"><span>MIE</span></label><label><input type="checkbox" value="4"><span>JUE</span></label><label><input type="checkbox" value="5"><span>VIE</span></label><label><input type="checkbox" value="6"><span>SAB</span></label><label><input type="checkbox" value="0"><span>DOM</span></label>
 </div>
-<button class="btn" onclick="guardarHorario()">Guardar y cargar al calendario</button>
+<button id="btnGuardarHorario" class="btn" onclick="guardarHorario()">Guardar y cargar al calendario</button>
+<button id="btnCancelarEdit" class="btn sec" onclick="cancelarEdicion()" style="display:none">Cancelar edición</button>
 </div></div>
 
 <script>
 const API_URL="https://script.google.com/macros/s/AKfycbxXwcFMW8BUiXQoLi3i2gT9KDXkxFpj1MK1VHMZa7-YyY7QCR7JB-hI6hAGdz9FkW0/exec";
 const colores={Cecilia:'#ff7ab6',Juan:'#111',Juani:'#4f8cff',Agus:'#0a7d3e',Gonza:'#ff9f1c'};
-let actividades=[], horarios=[], mesActual=new Date(); mesActual.setDate(1); let miembroActual=null;
+let actividades=[], horarios=[], mesActual=new Date(); mesActual.setDate(1); let miembroActual=null; let editId=null;
 
 function toggleOtro(){ document.getElementById('h_titulo').style.display = document.getElementById('h_tipo').value==='otro'? 'block' : 'none'; }
-function abrirMiembro(nombre){ miembroActual=nombre; document.getElementById('modalTitle').innerHTML=`<span class="pill ${nombre}">${nombre}</span> horarios`; document.getElementById('modal').classList.add('open'); renderHorariosModal(); }
-function cerrar(){ document.getElementById('modal').classList.remove('open'); }
+function abrirMiembro(nombre){ miembroActual=nombre; editId=null; resetForm(); document.getElementById('modalTitle').innerHTML=`<span class="pill ${nombre}">${nombre}</span> horarios`; document.getElementById('modal').classList.add('open'); renderHorariosModal(); }
+function cerrar(){ document.getElementById('modal').classList.remove('open'); editId=null; resetForm(); }
+function limpiaHora(v){ if(!v) return ""; v=String(v); if(v.includes("1899")||v.includes("T")||v.includes("Z")){ let d=new Date(v); if(!isNaN(d)) return d.toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit',hour12:false}); } return v.slice(0,5); }
 
-function limpiaHora(v){
-  if(!v) return "";
-  v = String(v);
-  if(v.includes("1899") || v.includes("T") || v.includes("Z")){
-    let d = new Date(v);
-    if(!isNaN(d)) return d.toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit',hour12:false});
-  }
-  return v.slice(0,5);
+function resetForm(){
+  document.getElementById('formTitle').textContent = '+ Agregar horario fijo';
+  document.getElementById('btnGuardarHorario').textContent = 'Guardar y cargar al calendario';
+  document.getElementById('btnCancelarEdit').style.display='none';
+  document.getElementById('h_tipo').value='colegio'; document.getElementById('h_titulo').value=''; document.getElementById('h_ini').value=''; document.getElementById('h_fin').value=''; document.getElementById('h_lugar').value='';
+  document.querySelectorAll('#diasBox input').forEach(i=>i.checked=false);
+  document.getElementById('h_titulo').style.display='none';
 }
 
 function renderHorariosModal(){
  const lista = horarios.filter(h=>h.quien===miembroActual);
  document.getElementById('horariosList').innerHTML = lista.map(h=>{
-   const ini = limpiaHora(h.horaInicio); const fin = limpiaHora(h.horaFin);
-   return `<div class="item"><div><div style="font-size:10px;opacity:.6;font-weight:800">${h.tipo.toUpperCase()} · ${h.dias.map(d=>['DOM','LUN','MAR','MIE','JUE','VIE','SAB'][d]).join(', ')} · ${ini} - ${fin}</div>
+   const ini=limpiaHora(h.horaInicio); const fin=limpiaHora(h.horaFin);
+   return `<div class="item"><div style="flex:1"><div style="font-size:10px;opacity:.6;font-weight:800">${h.tipo.toUpperCase()} · ${h.dias.map(d=>['DOM','LUN','MAR','MIE','JUE','VIE','SAB'][d]).join(', ')} · ${ini} - ${fin}</div>
    <div style="font-weight:700;font-size:13px">${h.titulo}</div><div style="font-size:11px;opacity:.6">${h.lugar||''}</div></div>
-   <button onclick="borrarHorario('${h.id}')" style="border:none;background:#f5f5f5;border-radius:999px;padding:6px 8px">✕</button></div>`;
+   <div style="display:flex;gap:4px"><button onclick="editarHorario('${h.id}')" style="border:none;background:#e8f0ff;border-radius:999px;padding:6px 9px;cursor:pointer">✏️</button><button onclick="borrarHorario('${h.id}')" style="border:none;background:#f5f5f5;border-radius:999px;padding:6px 9px;cursor:pointer">✕</button></div></div>`;
  }).join('') || '<div style="font-size:12px;opacity:.5">Sin horarios fijos aún</div>';
 }
+
+function editarHorario(id){
+  const h = horarios.find(x=> String(x.id)===String(id));
+  if(!h) return;
+  editId = h.id;
+  document.getElementById('formTitle').textContent = '✏️ Editando: '+h.titulo;
+  document.getElementById('btnGuardarHorario').textContent = 'Actualizar horario';
+  document.getElementById('btnCancelarEdit').style.display='block';
+  document.getElementById('h_tipo').value = h.tipo;
+  if(h.tipo==='otro'){ document.getElementById('h_titulo').style.display='block'; document.getElementById('h_titulo').value=h.titulo; }
+  else { 
+    // si es colegio/futbol con aclaracion tipo "Colegio - Ingles"
+    if(h.titulo.includes(' - ')){ document.getElementById('h_titulo').style.display='block'; document.getElementById('h_titulo').value=h.titulo.split(' - ').slice(1).join(' - '); }
+    else { document.getElementById('h_titulo').style.display='none'; }
+  }
+  document.getElementById('h_ini').value = limpiaHora(h.horaInicio);
+  document.getElementById('h_fin').value = limpiaHora(h.horaFin);
+  document.getElementById('h_lugar').value = h.lugar||'';
+  document.querySelectorAll('#diasBox input').forEach(inp=>{ inp.checked = h.dias.includes(parseInt(inp.value)); });
+  document.getElementById('h_tipo').dispatchEvent(new Event('change'));
+  window.scrollTo(0,document.body.scrollHeight);
+}
+
+function cancelarEdicion(){ editId=null; resetForm(); }
 
 async function cargar(){
  try{
@@ -108,16 +134,12 @@ async function cargar(){
    if(miembroActual) renderHorariosModal();
  }catch(e){ document.getElementById('status').textContent='● Offline'; }
 }
-
 function getEventosDelDia(fechaStr){
   const diaSem = new Date(fechaStr+'T12:00:00').getDay();
   const puntuales = actividades.filter(a=> String(a.fecha).slice(0,10)===fechaStr);
-  const fijos = horarios.filter(h=> h.dias.includes(diaSem)).map(h=>({
-    id:'h_'+h.id+'_'+fechaStr, quien:h.quien, titulo:h.titulo, tipo:h.tipo, fecha:fechaStr, hora:limpiaHora(h.horaInicio), horaFin:limpiaHora(h.horaFin), lugar:h.lugar, esFijo:true
-  }));
+  const fijos = horarios.filter(h=> h.dias.includes(diaSem)).map(h=>({ id:'h_'+h.id+'_'+fechaStr, quien:h.quien, titulo:h.titulo, tipo:h.tipo, fecha:fechaStr, hora:limpiaHora(h.horaInicio), horaFin:limpiaHora(h.horaFin), lugar:h.lugar, esFijo:true }));
   return [...fijos,...puntuales].sort((a,b)=> String(a.hora).localeCompare(String(b.hora)));
 }
-
 function render(){
  const y=mesActual.getFullYear(), m=mesActual.getMonth();
  document.getElementById('mesLabel').textContent = mesActual.toLocaleDateString('es-AR',{month:'long',year:'numeric'});
@@ -149,19 +171,27 @@ async function guardarTurno(){
  await fetch(API_URL,{method:'POST',mode:'no-cors',body:JSON.stringify(a)}); titulo.value=''; lugar.value=''; setTimeout(cargar,1200);
 }
 async function borrarTurno(id){ if(!confirm('¿Borrar?')) return; await fetch(API_URL,{method:'POST',mode:'no-cors',body:JSON.stringify({action:'delete',id})}); setTimeout(cargar,1000); }
+
 async function guardarHorario(){
- const dias = [...document.querySelectorAll('.diasChk input:checked')].map(i=>parseInt(i.value));
+ const dias = [...document.querySelectorAll('#diasBox input:checked')].map(i=>parseInt(i.value));
  if(dias.length===0) return alert('Seleccioná al menos un día');
  const tipo = document.getElementById('h_tipo').value;
  let tituloFinal = tipo==='colegio'?'Colegio': tipo==='futbol'?'Fútbol': document.getElementById('h_titulo').value;
  if(tipo==='otro' &&!tituloFinal) return alert('Aclaración de qué es');
  if(tipo!=='otro' && document.getElementById('h_titulo').value) tituloFinal += ' - '+document.getElementById('h_titulo').value;
- const h={action:'addHorario', id:Date.now(), quien:miembroActual, titulo:tituloFinal, tipo:tipo, dias:dias, horaInicio:document.getElementById('h_ini').value, horaFin:document.getElementById('h_fin').value, lugar:document.getElementById('h_lugar').value};
+ 
+ // Si estoy editando, primero borro el viejo
+ if(editId){
+   await fetch(API_URL,{method:'POST',mode:'no-cors',body:JSON.stringify({action:'deleteHorario',id:editId})});
+   await new Promise(r=>setTimeout(r,800));
+ }
+ 
+ const h={action:'addHorario', id: editId || Date.now(), quien:miembroActual, titulo:tituloFinal, tipo:tipo, dias:dias, horaInicio:document.getElementById('h_ini').value, horaFin:document.getElementById('h_fin').value, lugar:document.getElementById('h_lugar').value};
  await fetch(API_URL,{method:'POST',mode:'no-cors',body:JSON.stringify(h)});
- document.getElementById('h_titulo').value=''; document.getElementById('h_lugar').value='';
+ editId=null; resetForm();
  setTimeout(cargar,1200);
 }
-async function borrarHorario(id){ if(!confirm('Borrar horario fijo?')) return; await fetch(API_URL,{method:'POST',mode:'no-cors',body:JSON.stringify({action:'deleteHorario',id})}); setTimeout(cargar,1000); }
+async function borrarHorario(id){ if(!confirm('¿Borrar horario fijo? Se borra de todo el calendario')) return; await fetch(API_URL,{method:'POST',mode:'no-cors',body:JSON.stringify({action:'deleteHorario',id})}); setTimeout(cargar,1000); }
 cargar(); document.getElementById('fecha').value = new Date().toISOString().slice(0,10);
 </script>
 </body>
