@@ -13,9 +13,9 @@ header{padding:14px 18px;display:flex;justify-content:space-between;align-items:
 .grid{display:grid;grid-template-columns:1fr;gap:12px;padding:12px} @media(min-width:900px){.grid{grid-template-columns:340px 1fr}}
 .card{background:white;border-radius:18px;border:1px solid #eee;padding:14px}
 .cal{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-top:10px}
-.dia{aspect-ratio:1/1;border-radius:10px;border:1px solid #f0f0f0;padding:5px;font-size:11px;cursor:pointer;background:white;overflow:hidden}
-.dia.hoy{border:2px solid #111;font-weight:800}.dia.tiene{background:#fffaf0}
-.dia.vacio{opacity:.3}
+.dia{aspect-ratio:1/1;border-radius:10px;border:1px solid #f0f0f0;padding:5px;font-size:11px;cursor:pointer;background:white;overflow:hidden;transition:.1s}
+.dia:hover{border-color:#111;transform:scale(1.02)}
+.dia.hoy{border:2px solid #111;font-weight:800}.dia.tiene{background:#fffaf0}.dia.vacio{opacity:.3}
 .evento{font-size:8px;padding:3px 5px;border-radius:6px;color:white;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:700}
 .input{width:100%;padding:11px 12px;border-radius:12px;border:1px solid #e5e5e5;margin-top:8px;font-size:13px}
 .btn{width:100%;padding:12px;border-radius:999px;border:none;background:#111;color:white;font-weight:800;margin-top:10px;cursor:pointer}
@@ -45,124 +45,103 @@ header{padding:14px 18px;display:flex;justify-content:space-between;align-items:
 <button class="pill Agus" onclick="setFiltro('Agus',this)">Agus</button>
 <button class="pill Gonza" onclick="setFiltro('Gonza',this)">Gonza</button>
 </div>
-<div style="font-size:10px;opacity:.5;margin-top:8px">Tocá un nombre para filtrar el calendario. Tocá su foto abajo para editar horarios.</div>
 <hr style="margin:12px 0;border:none;border-top:1px solid #eee">
-<h3 style="font-size:13px">⚙️ Editar horarios fijos de:</h3>
+<h3 style="font-size:13px">⚙️ Editar horarios fijos:</h3>
 <div style="display:flex;gap:7px;flex-wrap:wrap;margin-top:8px">
-<button class="pill Familia" onclick="abrirMiembro('Familia')">👨‍👩‍👧‍👦 Familia</button>
+<button class="pill Familia" onclick="abrirMiembro('Familia')">Familia</button>
 <button class="pill Cecilia" onclick="abrirMiembro('Cecilia')">Cecilia</button>
 <button class="pill Juan" onclick="abrirMiembro('Juan')">Juan</button>
 <button class="pill Juani" onclick="abrirMiembro('Juani')">Juani</button>
 <button class="pill Agus" onclick="abrirMiembro('Agus')">Agus</button>
 <button class="pill Gonza" onclick="abrirMiembro('Gonza')">Gonza</button>
 </div>
-<hr style="margin:12px 0;border:none;border-top:1px solid #eee">
-<h3 style="font-size:14px">+ Turno puntual</h3>
-<select id="quien" class="input"><option>Familia</option><option>Cecilia</option><option selected>Juan</option><option>Juani</option><option>Agus</option><option>Gonza</option></select>
-<input id="titulo" class="input" placeholder="Ej: Asado domingo - Familia"><input id="fecha" type="date" class="input"><input id="hora" type="time" class="input"><input id="lugar" class="input" placeholder="Lugar">
-<button class="btn" onclick="guardarTurno()">Guardar turno</button>
 </div>
 </div>
 
 <div>
 <div class="card">
 <div style="display:flex;justify-content:space-between;align-items:center"><h3 id="mesLabel"></h3><div><button onclick="cambiarMes(-1)" style="padding:6px 10px;border-radius:999px;border:1px solid #eee;background:white">‹</button><button onclick="cambiarMes(1)" style="padding:6px 10px;border-radius:999px;border:1px solid #eee;background:white">›</button></div></div>
+<div style="font-size:10px;opacity:.5;margin-top:4px">Tocá un día para cargar algo ese día</div>
 <div class="cal" id="cal"></div>
 </div>
-<div class="card" style="margin-top:10px"><h3 style="font-size:14px">Agenda filtrada: <span id="agendaFiltro" style="font-size:11px;opacity:.5"></span></h3><div id="lista"></div></div>
+<div class="card" style="margin-top:10px"><h3 style="font-size:14px">Agenda filtrada: <span id="agendaFiltro" style="font-size:11px;opacity:.5">todos</span></h3><div id="lista"></div></div>
 </div>
 </div>
 
+<!-- MODAL HORARIOS FIJOS -->
 <div id="modal" class="modal" onclick="if(event.target===this) cerrar()"><div class="modalBox">
 <div style="display:flex;justify-content:space-between;align-items:center"><h2 id="modalTitle" style="font-size:18px"></h2><button onclick="cerrar()" style="border:none;background:#f2f2f2;border-radius:999px;padding:6px 10px">✕</button></div>
 <div id="horariosList" style="margin-top:12px"></div>
 <hr style="margin:14px 0;border:none;border-top:1px solid #eee">
 <h4 id="formTitle" style="font-size:13px">+ Agregar horario fijo</h4>
-<select id="h_tipo" class="input" onchange="toggleOtro()"><option value="colegio">🏫 Colegio</option><option value="futbol">⚽ Fútbol</option><option value="familia">👨‍👩‍👧‍👦 Familiar</option><option value="otro">📌 Otro</option></select>
-<input id="h_titulo" class="input" placeholder="Aclaración: Ej: Inglés, Catequesis, Asado" style="display:none">
+<select id="h_tipo" class="input"><option value="colegio">🏫 Colegio</option><option value="futbol">⚽ Fútbol</option><option value="familia">👨‍👩‍👧‍👦 Familiar</option><option value="otro">📌 Otro</option></select>
+<input id="h_titulo" class="input" placeholder="Aclaración: Ej: Inglés" style="display:none">
 <div style="display:flex;gap:8px"><input id="h_ini" type="time" class="input"><input id="h_fin" type="time" class="input"></div>
 <input id="h_lugar" class="input" placeholder="Lugar / Cancha">
 <div style="font-size:11px;font-weight:700;margin-top:10px">¿Qué días se repite?</div>
 <div class="diasChk" id="diasBox">
 <label><input type="checkbox" value="1"><span>LUN</span></label><label><input type="checkbox" value="2"><span>MAR</span></label><label><input type="checkbox" value="3"><span>MIE</span></label><label><input type="checkbox" value="4"><span>JUE</span></label><label><input type="checkbox" value="5"><span>VIE</span></label><label><input type="checkbox" value="6"><span>SAB</span></label><label><input type="checkbox" value="0"><span>DOM</span></label>
 </div>
-<button id="btnGuardarHorario" class="btn" onclick="guardarHorario()">Guardar y cargar al calendario</button>
-<button id="btnCancelarEdit" class="btn sec" onclick="cancelarEdicion()" style="display:none">Cancelar edición</button>
+<button id="btnGuardarHorario" class="btn" onclick="guardarHorario()">Guardar</button>
+<button id="btnCancelarEdit" class="btn sec" onclick="cancelarEdicion()" style="display:none">Cancelar</button>
+</div></div>
+
+<!-- MODAL DIA -->
+<div id="modalDia" class="modal" onclick="if(event.target===this) cerrarDia()"><div class="modalBox">
+<div style="display:flex;justify-content:space-between;align-items:center"><h2 id="diaTitle" style="font-size:18px"></h2><button onclick="cerrarDia()" style="border:none;background:#f2f2f2;border-radius:999px;padding:6px 10px">✕</button></div>
+<div id="diaEventos" style="margin-top:12px"></div>
+<hr style="margin:14px 0;border:none;border-top:1px solid #eee">
+<h4 style="font-size:13px">+ Cargar algo para este día</h4>
+<select id="d_quien" class="input"><option>Familia</option><option>Cecilia</option><option>Juan</option><option>Juani</option><option>Agus</option><option>Gonza</option></select>
+<input id="d_titulo" class="input" placeholder="Qué hay? Ej: Cumple, Dentista, Asado">
+<div style="display:flex;gap:8px"><input id="d_hora" type="time" class="input"><input id="d_horaFin" type="time" class="input" placeholder="Fin"></div>
+<input id="d_lugar" class="input" placeholder="Lugar">
+<button class="btn" onclick="guardarTurnoDia()">Guardar para este día</button>
 </div></div>
 
 <script>
 const API_URL="https://script.google.com/macros/s/AKfycbxXwcFMW8BUiXQoLi3i2gT9KDXkxFpj1MK1VHMZa7-YyY7QCR7JB-hI6hAGdz9FkW0/exec";
 const colores={Cecilia:'#ff7ab6',Juan:'#111',Juani:'#4f8cff',Agus:'#0a7d3e',Gonza:'#ff9f1c',Familia:'#8b5cf6'};
-let actividades=[], horarios=[], mesActual=new Date(); mesActual.setDate(1); let miembroActual=null; let editId=null; let filtroActual='todos';
+let actividades=[], horarios=[], mesActual=new Date(); mesActual.setDate(1); let miembroActual=null; let editId=null; let filtroActual='todos'; let diaSeleccionado=null;
 
-function setFiltro(nombre, btn){
-  filtroActual=nombre;
-  document.getElementById('filtroTxt').textContent=nombre;
-  document.getElementById('agendaFiltro').textContent=nombre;
-  document.querySelectorAll('#filtros .pill').forEach(b=>b.classList.remove('active'));
-  if(btn) btn.classList.add('active');
-  render();
-}
-
-function toggleOtro(){ document.getElementById('h_titulo').style.display = document.getElementById('h_tipo').value==='otro' ? 'block' : 'none'; }
+function setFiltro(nombre, btn){ filtroActual=nombre; document.getElementById('filtroTxt').textContent=nombre; document.getElementById('agendaFiltro').textContent=nombre; document.querySelectorAll('#filtros .pill').forEach(b=>b.classList.remove('active')); if(btn) btn.classList.add('active'); render(); }
 function abrirMiembro(nombre){ miembroActual=nombre; editId=null; resetForm(); document.getElementById('modalTitle').innerHTML=`<span class="pill ${nombre}">${nombre}</span> horarios`; document.getElementById('modal').classList.add('open'); renderHorariosModal(); }
 function cerrar(){ document.getElementById('modal').classList.remove('open'); editId=null; resetForm(); }
-function limpiaHora(v){ if(!v) return ""; v=String(v); if(v.includes("1899")||v.includes("T")||v.includes("Z")){ let d=new Date(v); if(!isNaN(d)) return d.toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit',hour12:false}); } return v.slice(0,5); }
-function resetForm(){
-  document.getElementById('formTitle').textContent='+ Agregar horario fijo';
-  document.getElementById('btnGuardarHorario').textContent='Guardar y cargar al calendario';
-  document.getElementById('btnCancelarEdit').style.display='none';
-  document.getElementById('h_tipo').value='colegio'; document.getElementById('h_titulo').value=''; document.getElementById('h_ini').value=''; document.getElementById('h_fin').value=''; document.getElementById('h_lugar').value='';
-  document.querySelectorAll('#diasBox input').forEach(i=>i.checked=false);
-  document.getElementById('h_titulo').style.display='none';
+function abrirDia(fechaStr){
+  diaSeleccionado=fechaStr;
+  const evs = getEventosDelDia(fechaStr,false); // sin filtro para ver todo ese día
+  document.getElementById('diaTitle').innerHTML = new Date(fechaStr+'T12:00:00').toLocaleDateString('es-AR',{weekday:'long',day:'numeric',month:'long'});
+  document.getElementById('diaEventos').innerHTML = evs.map(e=>{
+    const rango = e.esFijo ? `${e.hora} - ${e.horaFin}` : `${e.hora}`;
+    return `<div class="item" style="border-left:4px solid ${colores[e.quien]}"><div><div style="font-size:10px;opacity:.6;font-weight:800">${rango} · ${e.quien} ${e.esFijo?'· FIJO':''}</div><div style="font-weight:700;font-size:13px">${e.titulo}</div><div style="font-size:11px;opacity:.6">${e.lugar||''}</div></div>${e.esFijo?'':`<button onclick="borrarTurno('${e.id}'); setTimeout(()=>abrirDia('${fechaStr}'),800)" style="border:none;background:#f5f5f5;border-radius:999px;padding:6px 8px">✕</button>`}</div>`;
+  }).join('') || '<div style="font-size:12px;opacity:.5">Nada cargado este día</div>';
+  document.getElementById('d_quien').value = filtroActual!=='todos' ? filtroActual : 'Familia';
+  document.getElementById('modalDia').classList.add('open');
 }
+function cerrarDia(){ document.getElementById('modalDia').classList.remove('open'); diaSeleccionado=null; document.getElementById('d_titulo').value=''; document.getElementById('d_lugar').value=''; }
+
+function limpiaHora(v){ if(!v) return ""; v=String(v).trim(); if(v.includes("T")||v.includes("Z")||v.includes("1899")){ let d=new Date(v); if(!isNaN(d)) return ("0"+d.getHours()).slice(-2)+":"+("0"+d.getMinutes()).slice(-2); } return v.slice(0,5); }
+function resetForm(){ document.getElementById('formTitle').textContent='+ Agregar horario fijo'; document.getElementById('btnGuardarHorario').textContent='Guardar'; document.getElementById('btnCancelarEdit').style.display='none'; document.getElementById('h_tipo').value='colegio'; document.getElementById('h_titulo').value=''; document.getElementById('h_ini').value=''; document.getElementById('h_fin').value=''; document.getElementById('h_lugar').value=''; document.querySelectorAll('#diasBox input').forEach(i=>i.checked=false); document.getElementById('h_titulo').style.display='none'; document.getElementById('h_tipo').onchange=()=>{ document.getElementById('h_titulo').style.display = (document.getElementById('h_tipo').value==='otro'||document.getElementById('h_tipo').value==='familia')?'block':'none'; } }
+
 function renderHorariosModal(){
  const lista = horarios.filter(h=>h.quien===miembroActual);
  document.getElementById('horariosList').innerHTML = lista.map(h=>{
    const ini=limpiaHora(h.horaInicio); const fin=limpiaHora(h.horaFin);
-   return `<div class="item"><div style="flex:1"><div style="font-size:10px;opacity:.6;font-weight:800">${h.tipo.toUpperCase()} · ${h.dias.map(d=>['DOM','LUN','MAR','MIE','JUE','VIE','SAB'][d]).join(', ')} · ${ini} - ${fin}</div>
-   <div style="font-weight:700;font-size:13px">${h.titulo}</div><div style="font-size:11px;opacity:.6">${h.lugar||''}</div></div>
-   <div style="display:flex;gap:4px"><button onclick="editarHorario('${h.id}')" style="border:none;background:#e8f0ff;border-radius:999px;padding:6px 9px;cursor:pointer">✏️</button><button onclick="borrarHorario('${h.id}')" style="border:none;background:#f5f5f5;border-radius:999px;padding:6px 9px;cursor:pointer">✕</button></div></div>`;
+   return `<div class="item"><div style="flex:1"><div style="font-size:10px;opacity:.6;font-weight:800">${h.tipo.toUpperCase()} · ${h.dias.map(d=>['DOM','LUN','MAR','MIE','JUE','VIE','SAB'][d]).join(', ')} · ${ini} - ${fin}</div><div style="font-weight:700;font-size:13px">${h.titulo}</div><div style="font-size:11px;opacity:.6">${h.lugar||''}</div></div><div style="display:flex;gap:4px"><button onclick="editarHorario('${h.id}')" style="border:none;background:#e8f0ff;border-radius:999px;padding:6px 9px">✏️</button><button onclick="borrarHorario('${h.id}')" style="border:none;background:#f5f5f5;border-radius:999px;padding:6px 9px">✕</button></div></div>`;
  }).join('') || '<div style="font-size:12px;opacity:.5">Sin horarios fijos aún</div>';
 }
-function editarHorario(id){
-  const h = horarios.find(x=> String(x.id)===String(id)); if(!h) return;
-  editId=h.id;
-  document.getElementById('formTitle').textContent='✏️ Editando: '+h.titulo;
-  document.getElementById('btnGuardarHorario').textContent='Actualizar horario';
-  document.getElementById('btnCancelarEdit').style.display='block';
-  document.getElementById('h_tipo').value=h.tipo;
-  if(h.tipo==='otro' || h.titulo.includes(' - ')){
-    document.getElementById('h_titulo').style.display='block';
-    document.getElementById('h_titulo').value = h.titulo.includes(' - ') ? h.titulo.split(' - ').slice(1).join(' - ') : h.titulo;
-  }
-  document.getElementById('h_ini').value=limpiaHora(h.horaInicio);
-  document.getElementById('h_fin').value=limpiaHora(h.horaFin);
-  document.getElementById('h_lugar').value=h.lugar||'';
-  document.querySelectorAll('#diasBox input').forEach(inp=>{ inp.checked = h.dias.includes(parseInt(inp.value)); });
-}
+function editarHorario(id){ const h=horarios.find(x=>String(x.id)===String(id)); if(!h) return; editId=h.id; document.getElementById('formTitle').textContent='✏️ Editando: '+h.titulo; document.getElementById('btnGuardarHorario').textContent='Actualizar'; document.getElementById('btnCancelarEdit').style.display='block'; document.getElementById('h_tipo').value=h.tipo; document.getElementById('h_titulo').style.display='block'; document.getElementById('h_titulo').value=h.titulo; document.getElementById('h_ini').value=limpiaHora(h.horaInicio); document.getElementById('h_fin').value=limpiaHora(h.horaFin); document.getElementById('h_lugar').value=h.lugar||''; document.querySelectorAll('#diasBox input').forEach(inp=>{ inp.checked=h.dias.includes(parseInt(inp.value)); }); }
 function cancelarEdicion(){ editId=null; resetForm(); }
 
-async function cargar(){
- try{
-   const r=await fetch(API_URL,{cache:'no-store'}); const d=await r.json();
-   actividades=d.actividades||[]; horarios=d.horarios||[];
-   document.getElementById('status').textContent='● Sincronizado'; render();
-   if(miembroActual) renderHorariosModal();
- }catch(e){ document.getElementById('status').textContent='● Offline'; }
-}
-
+async function cargar(){ try{ const r=await fetch(API_URL,{cache:'no-store'}); const d=await r.json(); actividades=d.actividades||[]; horarios=d.horarios||[]; document.getElementById('status').textContent='● Sincronizado'; render(); if(miembroActual) renderHorariosModal(); if(diaSeleccionado) abrirDia(diaSeleccionado); }catch(e){ document.getElementById('status').textContent='● Offline'; } }
 function getEventosDelDia(fechaStr, aplicarFiltro=true){
   const diaSem = new Date(fechaStr+'T12:00:00').getDay();
   const puntuales = actividades.filter(a=> String(a.fecha).slice(0,10)===fechaStr);
   const fijos = horarios.filter(h=> h.dias.includes(diaSem)).map(h=>({ id:'h_'+h.id+'_'+fechaStr, quien:h.quien, titulo:h.titulo, tipo:h.tipo, fecha:fechaStr, hora:limpiaHora(h.horaInicio), horaFin:limpiaHora(h.horaFin), lugar:h.lugar, esFijo:true }));
   let todos = [...fijos,...puntuales];
-  if(aplicarFiltro && filtroActual!=='todos'){
-    todos = todos.filter(e=> e.quien===filtroActual);
-  }
+  if(aplicarFiltro && filtroActual!=='todos'){ todos = todos.filter(e=> e.quien===filtroActual); }
   return todos.sort((a,b)=> String(a.hora).localeCompare(String(b.hora)));
 }
-
 function render(){
  const y=mesActual.getFullYear(), m=mesActual.getMonth();
  document.getElementById('mesLabel').textContent = mesActual.toLocaleDateString('es-AR',{month:'long',year:'numeric'});
@@ -171,12 +150,11 @@ function render(){
  for(let i=0;i<primerDia;i++) html+=`<div class="dia vacio"></div>`;
  for(let d=1;d<=diasMes;d++){
    const fechaStr=`${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-   const evs=getEventosDelDia(fechaStr, true);
+   const evs=getEventosDelDia(fechaStr,true);
    const hoy = new Date().toISOString().slice(0,10)===fechaStr?' hoy':'';
-   html+=`<div class="dia${evs.length?' tiene':''}${hoy}"><b>${d}</b>${evs.slice(0,3).map(e=>{
+   html+=`<div class="dia${evs.length?' tiene':''}${hoy}" onclick="abrirDia('${fechaStr}')"><b>${d}</b>${evs.slice(0,3).map(e=>{
      const rango = e.esFijo ? `${e.hora}-${e.horaFin}` : `${e.hora}`;
-     const icon = e.tipo==='colegio'?'🏫':e.tipo==='futbol'?'⚽':e.tipo==='familia'?'👨‍👩‍👧‍👦':'';
-     return `<div class="evento" style="background:${colores[e.quien]||'#111'}">${rango} ${icon} ${e.titulo.slice(0,12)}</div>`;
+     return `<div class="evento" style="background:${colores[e.quien]||'#111'}">${rango} ${e.titulo.slice(0,10)}</div>`;
    }).join('')}${evs.length>3?`<div style="font-size:9px;font-weight:800">+${evs.length-3}</div>`:''}</div>`;
  }
  document.getElementById('cal').innerHTML=html;
@@ -184,32 +162,35 @@ function render(){
  todosMes.sort((a,b)=> String(a.fecha).localeCompare(String(b.fecha)) || String(a.hora).localeCompare(String(b.hora)));
  document.getElementById('lista').innerHTML = todosMes.map(a=>{
    const rango = a.esFijo ? `${a.hora} - ${a.horaFin}` : `${a.hora}`;
-   return `<div class="item" style="${a.esFijo?'border-left:4px solid '+(colores[a.quien]||'#111'):''}"><div><div style="font-size:10px;opacity:.6;font-weight:800">${a.fecha} · ${rango} ${a.esFijo?'· FIJO':''} · ${a.quien}</div><div style="font-weight:700;font-size:13px">${a.titulo}</div><div style="font-size:11px;opacity:.6">${a.lugar||''}</div></div>${a.esFijo?'':`<button onclick="borrarTurno('${a.id}')" style="border:none;background:#f5f5f5;border-radius:999px;padding:6px 8px">✕</button>`}</div>`;
- }).join('') || '<div style="font-size:12px;opacity:.5;padding:8px">No hay nada para este filtro</div>';
+   return `<div class="item" style="${a.esFijo?'border-left:4px solid '+(colores[a.quien]||'#111'):''}"><div><div style="font-size:10px;opacity:.6;font-weight:800">${a.fecha} · ${rango} ${a.esFijo?'· FIJO':''} · ${a.quien}</div><div style="font-weight:700;font-size:13px">${a.titulo}</div><div style="font-size:11px;opacity:.6">${a.lugar||''}</div></div></div>`;
+ }).join('') || '<div style="font-size:12px;opacity:.5;padding:8px">Tocá un día para cargar</div>';
 }
-
 function cambiarMes(d){ mesActual.setMonth(mesActual.getMonth()+d); render(); }
-async function guardarTurno(){
- const a={action:'add', id:Date.now(), quien:document.getElementById('quien').value, titulo:document.getElementById('titulo').value, tipo:'turno', fecha:document.getElementById('fecha').value, hora:document.getElementById('hora').value, lugar:document.getElementById('lugar').value};
- if(!a.titulo||!a.fecha) return alert('Falta título o fecha');
- await fetch(API_URL,{method:'POST',mode:'no-cors',body:JSON.stringify(a)}); document.getElementById('titulo').value=''; document.getElementById('lugar').value=''; setTimeout(cargar,1200);
+
+async function guardarTurnoDia(){
+  if(!diaSeleccionado) return;
+  const horaIni = document.getElementById('d_hora').value;
+  const horaFin = document.getElementById('d_horaFin').value;
+  const titulo = document.getElementById('d_titulo').value + (horaFin ? ` (${horaIni}-${horaFin})` : '');
+  const a={action:'add', id:Date.now(), quien:document.getElementById('d_quien').value, titulo:document.getElementById('d_titulo').value, tipo:'turno', fecha:diaSeleccionado, hora:horaIni, horaFin:horaFin, lugar:document.getElementById('d_lugar').value};
+  if(!a.titulo) return alert('Poné qué hay');
+  await fetch(API_URL,{method:'POST',mode:'no-cors',body:JSON.stringify(a)});
+  cerrarDia(); setTimeout(cargar,1200);
 }
 async function borrarTurno(id){ if(!confirm('¿Borrar?')) return; await fetch(API_URL,{method:'POST',mode:'no-cors',body:JSON.stringify({action:'delete',id})}); setTimeout(cargar,1000); }
 async function guardarHorario(){
- const dias = [...document.querySelectorAll('#diasBox input:checked')].map(i=>parseInt(i.value));
- if(dias.length===0) return alert('Seleccioná al menos un día');
- const tipo = document.getElementById('h_tipo').value;
- let tituloFinal = tipo==='colegio'?'Colegio': tipo==='futbol'?'Fútbol': tipo==='familia'?'Familia': document.getElementById('h_titulo').value;
- if((tipo==='otro' || tipo==='familia') && !tituloFinal) return alert('Poné aclaración');
- if(tipo!=='otro' && tipo!=='familia' && document.getElementById('h_titulo').value) tituloFinal += ' - '+document.getElementById('h_titulo').value;
- if(tipo==='otro' || tipo==='familia') tituloFinal = document.getElementById('h_titulo').value || tituloFinal;
+ const dias=[...document.querySelectorAll('#diasBox input:checked')].map(i=>parseInt(i.value));
+ if(dias.length===0) return alert('Seleccioná días');
+ const tipo=document.getElementById('h_tipo').value;
+ let tituloFinal=document.getElementById('h_titulo').value || (tipo==='colegio'?'Colegio':tipo==='futbol'?'Fútbol':'Familia');
  if(editId){ await fetch(API_URL,{method:'POST',mode:'no-cors',body:JSON.stringify({action:'deleteHorario',id:editId})}); await new Promise(r=>setTimeout(r,800)); }
- const h={action:'addHorario', id: editId || Date.now(), quien:miembroActual, titulo:tituloFinal, tipo:tipo, dias:dias, horaInicio:document.getElementById('h_ini').value, horaFin:document.getElementById('h_fin').value, lugar:document.getElementById('h_lugar').value};
+ const h={action:'addHorario', id:editId||Date.now(), quien:miembroActual, titulo:tituloFinal, tipo:tipo, dias:dias, horaInicio:document.getElementById('h_ini').value, horaFin:document.getElementById('h_fin').value, lugar:document.getElementById('h_lugar').value};
  await fetch(API_URL,{method:'POST',mode:'no-cors',body:JSON.stringify(h)});
  editId=null; resetForm(); setTimeout(cargar,1200);
 }
-async function borrarHorario(id){ if(!confirm('¿Borrar horario fijo?')) return; await fetch(API_URL,{method:'POST',mode:'no-cors',body:JSON.stringify({action:'deleteHorario',id})}); setTimeout(cargar,1000); }
-cargar(); document.getElementById('fecha').value = new Date().toISOString().slice(0,10);
+async function borrarHorario(id){ if(!confirm('¿Borrar?')) return; await fetch(API_URL,{method:'POST',mode:'no-cors',body:JSON.stringify({action:'deleteHorario',id})}); setTimeout(cargar,1000); }
+
+cargar();
 </script>
 </body>
 </html>
