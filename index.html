@@ -7,15 +7,14 @@
 <style>
 *{margin:0;padding:0;box-sizing:border-box}body{font-family:'Inter',sans-serif;background:#f6f5f2}
 header{padding:14px 18px;display:flex;justify-content:space-between;align-items:center;background:white;border-bottom:1px solid #eee;position:sticky;top:0;z-index:10}
-.pill{padding:8px 14px;border-radius:999px;font-size:12px;font-weight:800;color:white;border:none;cursor:pointer;transition:.15s}
-.pill.active{outline:3px solid #111; outline-offset:2px}
+.pill{padding:8px 14px;border-radius:999px;font-size:12px;font-weight:800;color:white;border:none;cursor:pointer}
+.pill.active{outline:3px solid #111;outline-offset:2px}
 .Cecilia{background:#ff7ab6}.Juan{background:#111}.Juani{background:#4f8cff}.Agus{background:#0a7d3e}.Gonza{background:#ff9f1c}.Familia{background:#8b5cf6}
 .grid{display:grid;grid-template-columns:1fr;gap:12px;padding:12px} @media(min-width:900px){.grid{grid-template-columns:340px 1fr}}
 .card{background:white;border-radius:18px;border:1px solid #eee;padding:14px}
 .cal{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-top:10px}
-.dia{aspect-ratio:1/1;border-radius:10px;border:1px solid #f0f0f0;padding:5px;font-size:11px;cursor:pointer;background:white;overflow:hidden;transition:.1s}
-.dia:hover{border-color:#111;transform:scale(1.02)}
-.dia.hoy{border:2px solid #111;font-weight:800}.dia.tiene{background:#fffaf0}.dia.vacio{opacity:.3}
+.dia{min-height:75px;border-radius:10px;border:1px solid #f0f0f0;padding:5px;font-size:11px;cursor:pointer;background:white;overflow:hidden}
+.dia:hover{border-color:#111}.dia.hoy{border:2px solid #111;font-weight:800}.dia.tiene{background:#fffaf0}
 .evento{font-size:8px;padding:3px 5px;border-radius:6px;color:white;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:700}
 .input{width:100%;padding:11px 12px;border-radius:12px;border:1px solid #e5e5e5;margin-top:8px;font-size:13px}
 .btn{width:100%;padding:12px;border-radius:999px;border:none;background:#111;color:white;font-weight:800;margin-top:10px;cursor:pointer}
@@ -30,8 +29,7 @@ header{padding:14px 18px;display:flex;justify-content:space-between;align-items:
 </style>
 </head>
 <body>
-<header><div><b>FAMILIA APP</b><div style="font-size:11px;opacity:.6">Filtro: <span id="filtroTxt">Todos</span></div></div><div id="status" style="font-size:11px">● Sincronizando</div></header>
-
+<header><div><b>FAMILIA APP</b><div style="font-size:11px;opacity:.6">Filtro: <span id="filtroTxt">Todos</span> | Tocá un día para cargar</div></div><div id="status" style="font-size:11px">● Sincronizando</div></header>
 <div class="grid">
 <div>
 <div class="card">
@@ -57,139 +55,92 @@ header{padding:14px 18px;display:flex;justify-content:space-between;align-items:
 </div>
 </div>
 </div>
-
 <div>
 <div class="card">
 <div style="display:flex;justify-content:space-between;align-items:center"><h3 id="mesLabel"></h3><div><button onclick="cambiarMes(-1)" style="padding:6px 10px;border-radius:999px;border:1px solid #eee;background:white">‹</button><button onclick="cambiarMes(1)" style="padding:6px 10px;border-radius:999px;border:1px solid #eee;background:white">›</button></div></div>
-<div style="font-size:10px;opacity:.5;margin-top:4px">Tocá un día para cargar algo ese día</div>
 <div class="cal" id="cal"></div>
 </div>
-<div class="card" style="margin-top:10px"><h3 style="font-size:14px">Agenda filtrada: <span id="agendaFiltro" style="font-size:11px;opacity:.5">todos</span></h3><div id="lista"></div></div>
+<div class="card" style="margin-top:10px"><h3 style="font-size:14px">Agenda: <span id="agendaFiltro">todos</span></h3><div id="lista"></div></div>
 </div>
 </div>
 
-<!-- MODAL HORARIOS FIJOS -->
 <div id="modal" class="modal" onclick="if(event.target===this) cerrar()"><div class="modalBox">
-<div style="display:flex;justify-content:space-between;align-items:center"><h2 id="modalTitle" style="font-size:18px"></h2><button onclick="cerrar()" style="border:none;background:#f2f2f2;border-radius:999px;padding:6px 10px">✕</button></div>
+<div style="display:flex;justify-content:space-between"><h2 id="modalTitle"></h2><button onclick="cerrar()" style="border:none;background:#eee;border-radius:999px;padding:6px 10px">✕</button></div>
 <div id="horariosList" style="margin-top:12px"></div>
-<hr style="margin:14px 0;border:none;border-top:1px solid #eee">
-<h4 id="formTitle" style="font-size:13px">+ Agregar horario fijo</h4>
+<hr style="margin:12px 0;border:none;border-top:1px solid #eee">
 <select id="h_tipo" class="input"><option value="colegio">🏫 Colegio</option><option value="futbol">⚽ Fútbol</option><option value="familia">👨‍👩‍👧‍👦 Familiar</option><option value="otro">📌 Otro</option></select>
-<input id="h_titulo" class="input" placeholder="Aclaración: Ej: Inglés" style="display:none">
+<input id="h_titulo" class="input" placeholder="Título (ej: Asado, Inglés)" style="display:block">
 <div style="display:flex;gap:8px"><input id="h_ini" type="time" class="input"><input id="h_fin" type="time" class="input"></div>
-<input id="h_lugar" class="input" placeholder="Lugar / Cancha">
-<div style="font-size:11px;font-weight:700;margin-top:10px">¿Qué días se repite?</div>
-<div class="diasChk" id="diasBox">
-<label><input type="checkbox" value="1"><span>LUN</span></label><label><input type="checkbox" value="2"><span>MAR</span></label><label><input type="checkbox" value="3"><span>MIE</span></label><label><input type="checkbox" value="4"><span>JUE</span></label><label><input type="checkbox" value="5"><span>VIE</span></label><label><input type="checkbox" value="6"><span>SAB</span></label><label><input type="checkbox" value="0"><span>DOM</span></label>
-</div>
+<input id="h_lugar" class="input" placeholder="Lugar">
+<div style="font-size:11px;font-weight:700;margin-top:10px">Días</div>
+<div class="diasChk" id="diasBox"><label><input type="checkbox" value="1"><span>LUN</span></label><label><input type="checkbox" value="2"><span>MAR</span></label><label><input type="checkbox" value="3"><span>MIE</span></label><label><input type="checkbox" value="4"><span>JUE</span></label><label><input type="checkbox" value="5"><span>VIE</span></label><label><input type="checkbox" value="6"><span>SAB</span></label><label><input type="checkbox" value="0"><span>DOM</span></label></div>
 <button id="btnGuardarHorario" class="btn" onclick="guardarHorario()">Guardar</button>
-<button id="btnCancelarEdit" class="btn sec" onclick="cancelarEdicion()" style="display:none">Cancelar</button>
 </div></div>
 
-<!-- MODAL DIA -->
 <div id="modalDia" class="modal" onclick="if(event.target===this) cerrarDia()"><div class="modalBox">
-<div style="display:flex;justify-content:space-between;align-items:center"><h2 id="diaTitle" style="font-size:18px"></h2><button onclick="cerrarDia()" style="border:none;background:#f2f2f2;border-radius:999px;padding:6px 10px">✕</button></div>
-<div id="diaEventos" style="margin-top:12px"></div>
-<hr style="margin:14px 0;border:none;border-top:1px solid #eee">
-<h4 style="font-size:13px">+ Cargar algo para este día</h4>
+<div style="display:flex;justify-content:space-between"><h2 id="diaTitle" style="font-size:16px"></h2><button onclick="cerrarDia()" style="border:none;background:#eee;border-radius:999px;padding:6px 10px">✕</button></div>
+<div id="diaEventos" style="margin-top:10px"></div>
+<hr style="margin:12px 0;border:none;border-top:1px solid #eee">
+<h4 style="font-size:13px">+ Agregar a este día</h4>
 <select id="d_quien" class="input"><option>Familia</option><option>Cecilia</option><option>Juan</option><option>Juani</option><option>Agus</option><option>Gonza</option></select>
-<input id="d_titulo" class="input" placeholder="Qué hay? Ej: Cumple, Dentista, Asado">
-<div style="display:flex;gap:8px"><input id="d_hora" type="time" class="input"><input id="d_horaFin" type="time" class="input" placeholder="Fin"></div>
+<input id="d_titulo" class="input" placeholder="Qué hay? Ej: Asado abuela">
+<div style="display:flex;gap:8px"><input id="d_hora" type="time" class="input"><input id="d_horaFin" type="time" class="input"></div>
 <input id="d_lugar" class="input" placeholder="Lugar">
-<button class="btn" onclick="guardarTurnoDia()">Guardar para este día</button>
+<button class="btn" onclick="guardarTurnoDia()">Guardar en este día</button>
 </div></div>
 
 <script>
 const API_URL="https://script.google.com/macros/s/AKfycbxXwcFMW8BUiXQoLi3i2gT9KDXkxFpj1MK1VHMZa7-YyY7QCR7JB-hI6hAGdz9FkW0/exec";
 const colores={Cecilia:'#ff7ab6',Juan:'#111',Juani:'#4f8cff',Agus:'#0a7d3e',Gonza:'#ff9f1c',Familia:'#8b5cf6'};
-let actividades=[], horarios=[], mesActual=new Date(); mesActual.setDate(1); let miembroActual=null; let editId=null; let filtroActual='todos'; let diaSeleccionado=null;
+let actividades=[], horarios=[], mesActual=new Date(); mesActual.setDate(1); let miembroActual=null; let filtroActual='todos'; let diaSel=null; let editId=null;
 
-function setFiltro(nombre, btn){ filtroActual=nombre; document.getElementById('filtroTxt').textContent=nombre; document.getElementById('agendaFiltro').textContent=nombre; document.querySelectorAll('#filtros .pill').forEach(b=>b.classList.remove('active')); if(btn) btn.classList.add('active'); render(); }
-function abrirMiembro(nombre){ miembroActual=nombre; editId=null; resetForm(); document.getElementById('modalTitle').innerHTML=`<span class="pill ${nombre}">${nombre}</span> horarios`; document.getElementById('modal').classList.add('open'); renderHorariosModal(); }
-function cerrar(){ document.getElementById('modal').classList.remove('open'); editId=null; resetForm(); }
-function abrirDia(fechaStr){
-  diaSeleccionado=fechaStr;
-  const evs = getEventosDelDia(fechaStr,false); // sin filtro para ver todo ese día
-  document.getElementById('diaTitle').innerHTML = new Date(fechaStr+'T12:00:00').toLocaleDateString('es-AR',{weekday:'long',day:'numeric',month:'long'});
-  document.getElementById('diaEventos').innerHTML = evs.map(e=>{
-    const rango = e.esFijo ? `${e.hora} - ${e.horaFin}` : `${e.hora}`;
-    return `<div class="item" style="border-left:4px solid ${colores[e.quien]}"><div><div style="font-size:10px;opacity:.6;font-weight:800">${rango} · ${e.quien} ${e.esFijo?'· FIJO':''}</div><div style="font-weight:700;font-size:13px">${e.titulo}</div><div style="font-size:11px;opacity:.6">${e.lugar||''}</div></div>${e.esFijo?'':`<button onclick="borrarTurno('${e.id}'); setTimeout(()=>abrirDia('${fechaStr}'),800)" style="border:none;background:#f5f5f5;border-radius:999px;padding:6px 8px">✕</button>`}</div>`;
-  }).join('') || '<div style="font-size:12px;opacity:.5">Nada cargado este día</div>';
-  document.getElementById('d_quien').value = filtroActual!=='todos' ? filtroActual : 'Familia';
-  document.getElementById('modalDia').classList.add('open');
-}
-function cerrarDia(){ document.getElementById('modalDia').classList.remove('open'); diaSeleccionado=null; document.getElementById('d_titulo').value=''; document.getElementById('d_lugar').value=''; }
+function setFiltro(n,btn){ filtroActual=n; document.getElementById('filtroTxt').textContent=n; document.getElementById('agendaFiltro').textContent=n; document.querySelectorAll('#filtros .pill').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); render(); }
+function limpiaHora(v){ if(!v) return ""; v=String(v).trim(); if(v.includes('T')||v.includes('Z')||v.includes('1899')){ let d=new Date(v); if(!isNaN(d)) return ("0"+d.getHours()).slice(-2)+":"+("0"+d.getMinutes()).slice(-2); } return v.slice(0,5); }
 
-function limpiaHora(v){ if(!v) return ""; v=String(v).trim(); if(v.includes("T")||v.includes("Z")||v.includes("1899")){ let d=new Date(v); if(!isNaN(d)) return ("0"+d.getHours()).slice(-2)+":"+("0"+d.getMinutes()).slice(-2); } return v.slice(0,5); }
-function resetForm(){ document.getElementById('formTitle').textContent='+ Agregar horario fijo'; document.getElementById('btnGuardarHorario').textContent='Guardar'; document.getElementById('btnCancelarEdit').style.display='none'; document.getElementById('h_tipo').value='colegio'; document.getElementById('h_titulo').value=''; document.getElementById('h_ini').value=''; document.getElementById('h_fin').value=''; document.getElementById('h_lugar').value=''; document.querySelectorAll('#diasBox input').forEach(i=>i.checked=false); document.getElementById('h_titulo').style.display='none'; document.getElementById('h_tipo').onchange=()=>{ document.getElementById('h_titulo').style.display = (document.getElementById('h_tipo').value==='otro'||document.getElementById('h_tipo').value==='familia')?'block':'none'; } }
+async function cargar(){ try{ const r=await fetch(API_URL,{cache:'no-store'}); const d=await r.json(); actividades=d.actividades||[]; horarios=d.horarios||[]; document.getElementById('status').textContent='● Sincronizado'; render(); }catch(e){ document.getElementById('status').textContent='● Offline'; } }
 
-function renderHorariosModal(){
- const lista = horarios.filter(h=>h.quien===miembroActual);
- document.getElementById('horariosList').innerHTML = lista.map(h=>{
-   const ini=limpiaHora(h.horaInicio); const fin=limpiaHora(h.horaFin);
-   return `<div class="item"><div style="flex:1"><div style="font-size:10px;opacity:.6;font-weight:800">${h.tipo.toUpperCase()} · ${h.dias.map(d=>['DOM','LUN','MAR','MIE','JUE','VIE','SAB'][d]).join(', ')} · ${ini} - ${fin}</div><div style="font-weight:700;font-size:13px">${h.titulo}</div><div style="font-size:11px;opacity:.6">${h.lugar||''}</div></div><div style="display:flex;gap:4px"><button onclick="editarHorario('${h.id}')" style="border:none;background:#e8f0ff;border-radius:999px;padding:6px 9px">✏️</button><button onclick="borrarHorario('${h.id}')" style="border:none;background:#f5f5f5;border-radius:999px;padding:6px 9px">✕</button></div></div>`;
- }).join('') || '<div style="font-size:12px;opacity:.5">Sin horarios fijos aún</div>';
-}
-function editarHorario(id){ const h=horarios.find(x=>String(x.id)===String(id)); if(!h) return; editId=h.id; document.getElementById('formTitle').textContent='✏️ Editando: '+h.titulo; document.getElementById('btnGuardarHorario').textContent='Actualizar'; document.getElementById('btnCancelarEdit').style.display='block'; document.getElementById('h_tipo').value=h.tipo; document.getElementById('h_titulo').style.display='block'; document.getElementById('h_titulo').value=h.titulo; document.getElementById('h_ini').value=limpiaHora(h.horaInicio); document.getElementById('h_fin').value=limpiaHora(h.horaFin); document.getElementById('h_lugar').value=h.lugar||''; document.querySelectorAll('#diasBox input').forEach(inp=>{ inp.checked=h.dias.includes(parseInt(inp.value)); }); }
-function cancelarEdicion(){ editId=null; resetForm(); }
-
-async function cargar(){ try{ const r=await fetch(API_URL,{cache:'no-store'}); const d=await r.json(); actividades=d.actividades||[]; horarios=d.horarios||[]; document.getElementById('status').textContent='● Sincronizado'; render(); if(miembroActual) renderHorariosModal(); if(diaSeleccionado) abrirDia(diaSeleccionado); }catch(e){ document.getElementById('status').textContent='● Offline'; } }
-function getEventosDelDia(fechaStr, aplicarFiltro=true){
+// FIX IMPORTANTE: Familia se muestra siempre excepto cuando filtrás solo Familia
+function getEventosDelDia(fechaStr, usarFiltro=true){
   const diaSem = new Date(fechaStr+'T12:00:00').getDay();
   const puntuales = actividades.filter(a=> String(a.fecha).slice(0,10)===fechaStr);
   const fijos = horarios.filter(h=> h.dias.includes(diaSem)).map(h=>({ id:'h_'+h.id+'_'+fechaStr, quien:h.quien, titulo:h.titulo, tipo:h.tipo, fecha:fechaStr, hora:limpiaHora(h.horaInicio), horaFin:limpiaHora(h.horaFin), lugar:h.lugar, esFijo:true }));
-  let todos = [...fijos,...puntuales];
-  if(aplicarFiltro && filtroActual!=='todos'){ todos = todos.filter(e=> e.quien===filtroActual); }
-  return todos.sort((a,b)=> String(a.hora).localeCompare(String(b.hora)));
+  let todos = [...fijos,...puntuales].sort((a,b)=> String(a.hora).localeCompare(String(b.hora)));
+  if(!usarFiltro) return todos;
+  if(filtroActual==='todos') return todos;
+  if(filtroActual==='Familia') return todos.filter(e=> e.quien==='Familia');
+  // Si filtrás por Agus, ves Agus + Familia (lo común)
+  return todos.filter(e=> e.quien===filtroActual || e.quien==='Familia');
 }
+
 function render(){
- const y=mesActual.getFullYear(), m=mesActual.getMonth();
- document.getElementById('mesLabel').textContent = mesActual.toLocaleDateString('es-AR',{month:'long',year:'numeric'});
- const primerDia=new Date(y,m,1).getDay(); const diasMes=new Date(y,m+1,0).getDate();
- let html=''; ['D','L','M','M','J','V','S'].forEach(d=> html+=`<div style="font-size:10px;font-weight:800;opacity:.4;text-align:center">${d}</div>`);
- for(let i=0;i<primerDia;i++) html+=`<div class="dia vacio"></div>`;
- for(let d=1;d<=diasMes;d++){
-   const fechaStr=`${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-   const evs=getEventosDelDia(fechaStr,true);
-   const hoy = new Date().toISOString().slice(0,10)===fechaStr?' hoy':'';
-   html+=`<div class="dia${evs.length?' tiene':''}${hoy}" onclick="abrirDia('${fechaStr}')"><b>${d}</b>${evs.slice(0,3).map(e=>{
-     const rango = e.esFijo ? `${e.hora}-${e.horaFin}` : `${e.hora}`;
-     return `<div class="evento" style="background:${colores[e.quien]||'#111'}">${rango} ${e.titulo.slice(0,10)}</div>`;
-   }).join('')}${evs.length>3?`<div style="font-size:9px;font-weight:800">+${evs.length-3}</div>`:''}</div>`;
- }
- document.getElementById('cal').innerHTML=html;
- let todosMes=[]; for(let d=1;d<=diasMes;d++){ const fs=`${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`; getEventosDelDia(fs,true).forEach(e=> todosMes.push(e)); }
- todosMes.sort((a,b)=> String(a.fecha).localeCompare(String(b.fecha)) || String(a.hora).localeCompare(String(b.hora)));
- document.getElementById('lista').innerHTML = todosMes.map(a=>{
-   const rango = a.esFijo ? `${a.hora} - ${a.horaFin}` : `${a.hora}`;
-   return `<div class="item" style="${a.esFijo?'border-left:4px solid '+(colores[a.quien]||'#111'):''}"><div><div style="font-size:10px;opacity:.6;font-weight:800">${a.fecha} · ${rango} ${a.esFijo?'· FIJO':''} · ${a.quien}</div><div style="font-weight:700;font-size:13px">${a.titulo}</div><div style="font-size:11px;opacity:.6">${a.lugar||''}</div></div></div>`;
- }).join('') || '<div style="font-size:12px;opacity:.5;padding:8px">Tocá un día para cargar</div>';
+  const y=mesActual.getFullYear(), m=mesActual.getMonth();
+  document.getElementById('mesLabel').textContent=mesActual.toLocaleDateString('es-AR',{month:'long',year:'numeric'});
+  const primer=new Date(y,m,1).getDay(), dias=new Date(y,m+1,0).getDate();
+  let html=''; ['D','L','M','M','J','V','S'].forEach(d=> html+=`<div style="font-size:10px;opacity:.4;text-align:center">${d}</div>`);
+  for(let i=0;i<primer;i++) html+=`<div></div>`;
+  for(let d=1;d<=dias;d++){
+    const f=`${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const evs=getEventosDelDia(f,true);
+    const hoy=new Date().toISOString().slice(0,10)===f?' hoy':'';
+    html+=`<div class="dia${evs.length?' tiene':''}${hoy}" onclick="abrirDia('${f}')"><b>${d}</b>${evs.slice(0,3).map(e=>`<div class="evento" style="background:${colores[e.quien]||'#111'}">${e.hora} ${e.titulo.slice(0,10)}</div>`).join('')}${evs.length>3?`<div style="font-size:9px;font-weight:800">+${evs.length-3}</div>`:''}</div>`;
+  }
+  document.getElementById('cal').innerHTML=html;
+  let todos=[]; for(let d=1;d<=dias;d++){ let f=`${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`; getEventosDelDia(f,true).forEach(e=> todos.push(e)); }
+  todos.sort((a,b)=> String(a.fecha).localeCompare(String(b.fecha))||String(a.hora).localeCompare(String(b.hora)));
+  document.getElementById('lista').innerHTML=todos.map(a=>`<div class="item" style="border-left:4px solid ${colores[a.quien]}"><div><div style="font-size:10px;opacity:.6;font-weight:800">${a.fecha} ${a.hora}${a.horaFin?' - '+a.horaFin:''} · ${a.quien}</div><div style="font-weight:700;font-size:13px">${a.titulo}</div><div style="font-size:11px;opacity:.6">${a.lugar||''}</div></div>${a.esFijo?'':`<button onclick="borrarTurno('${a.id}')" style="border:none;background:#eee;border-radius:999px;padding:6px 8px">✕</button>`}</div>`).join('')||'<div style="font-size:12px;opacity:.5;padding:8px">Vacío</div>';
 }
+
 function cambiarMes(d){ mesActual.setMonth(mesActual.getMonth()+d); render(); }
+function abrirMiembro(n){ miembroActual=n; document.getElementById('modalTitle').innerHTML=`<span class="pill ${n}">${n}</span>`; document.getElementById('modal').classList.add('open'); document.getElementById('horariosList').innerHTML=horarios.filter(h=>h.quien===n).map(h=>`<div class="item"><div><div style="font-size:10px;opacity:.6">${h.dias.map(d=>['DOM','LUN','MAR','MIE','JUE','VIE','SAB'][d]).join(', ')} ${limpiaHora(h.horaInicio)}-${limpiaHora(h.horaFin)}</div><div style="font-weight:700">${h.titulo}</div></div><div><button onclick="editarHorario('${h.id}')" style="border:none;background:#e8f0ff;border-radius:999px;padding:6px 9px">✏️</button><button onclick="borrarHorario('${h.id}')" style="border:none;background:#eee;border-radius:999px;padding:6px 9px">✕</button></div></div>`).join('')||'Sin horarios'; }
+function cerrar(){ document.getElementById('modal').classList.remove('open'); }
+function editarHorario(id){ let h=horarios.find(x=>String(x.id)===String(id)); if(!h) return; editId=h.id; document.getElementById('h_tipo').value=h.tipo; document.getElementById('h_titulo').value=h.titulo; document.getElementById('h_ini').value=limpiaHora(h.horaInicio); document.getElementById('h_fin').value=limpiaHora(h.horaFin); document.getElementById('h_lugar').value=h.lugar||''; document.querySelectorAll('#diasBox input').forEach(i=> i.checked=h.dias.includes(parseInt(i.value))); }
+function abrirDia(f){ diaSel=f; document.getElementById('diaTitle').textContent=new Date(f+'T12:00:00').toLocaleDateString('es-AR',{weekday:'long',day:'numeric',month:'long'}); let evs=getEventosDelDia(f,false); document.getElementById('diaEventos').innerHTML=evs.map(e=>`<div class="item" style="border-left:4px solid ${colores[e.quien]}"><div><div style="font-size:10px;opacity:.6">${e.hora} ${e.quien}</div><div style="font-weight:700">${e.titulo}</div></div>${e.esFijo?'':`<button onclick="borrarTurno('${e.id}')" style="border:none;background:#eee;border-radius:999px;padding:6px 8px">✕</button>`}</div>`).join('')||'Nada este día'; document.getElementById('d_quien').value=filtroActual!=='todos'?filtroActual:'Familia'; document.getElementById('modalDia').classList.add('open'); }
+function cerrarDia(){ document.getElementById('modalDia').classList.remove('open'); }
 
-async function guardarTurnoDia(){
-  if(!diaSeleccionado) return;
-  const horaIni = document.getElementById('d_hora').value;
-  const horaFin = document.getElementById('d_horaFin').value;
-  const titulo = document.getElementById('d_titulo').value + (horaFin ? ` (${horaIni}-${horaFin})` : '');
-  const a={action:'add', id:Date.now(), quien:document.getElementById('d_quien').value, titulo:document.getElementById('d_titulo').value, tipo:'turno', fecha:diaSeleccionado, hora:horaIni, horaFin:horaFin, lugar:document.getElementById('d_lugar').value};
-  if(!a.titulo) return alert('Poné qué hay');
-  await fetch(API_URL,{method:'POST',mode:'no-cors',body:JSON.stringify(a)});
-  cerrarDia(); setTimeout(cargar,1200);
-}
-async function borrarTurno(id){ if(!confirm('¿Borrar?')) return; await fetch(API_URL,{method:'POST',mode:'no-cors',body:JSON.stringify({action:'delete',id})}); setTimeout(cargar,1000); }
-async function guardarHorario(){
- const dias=[...document.querySelectorAll('#diasBox input:checked')].map(i=>parseInt(i.value));
- if(dias.length===0) return alert('Seleccioná días');
- const tipo=document.getElementById('h_tipo').value;
- let tituloFinal=document.getElementById('h_titulo').value || (tipo==='colegio'?'Colegio':tipo==='futbol'?'Fútbol':'Familia');
- if(editId){ await fetch(API_URL,{method:'POST',mode:'no-cors',body:JSON.stringify({action:'deleteHorario',id:editId})}); await new Promise(r=>setTimeout(r,800)); }
- const h={action:'addHorario', id:editId||Date.now(), quien:miembroActual, titulo:tituloFinal, tipo:tipo, dias:dias, horaInicio:document.getElementById('h_ini').value, horaFin:document.getElementById('h_fin').value, lugar:document.getElementById('h_lugar').value};
- await fetch(API_URL,{method:'POST',mode:'no-cors',body:JSON.stringify(h)});
- editId=null; resetForm(); setTimeout(cargar,1200);
-}
-async function borrarHorario(id){ if(!confirm('¿Borrar?')) return; await fetch(API_URL,{method:'POST',mode:'no-cors',body:JSON.stringify({action:'deleteHorario',id})}); setTimeout(cargar,1000); }
-
+async function guardarTurnoDia(){ if(!diaSel) return; let o={action:'add', id:Date.now(), quien:document.getElementById('d_quien').value, titulo:document.getElementById('d_titulo').value, fecha:diaSel, hora:document.getElementById('d_hora').value, horaFin:document.getElementById('d_horaFin').value, lugar:document.getElementById('d_lugar').value}; if(!o.titulo) return alert('Falta título'); await fetch(API_URL,{method:'POST',mode:'no-cors',body:JSON.stringify(o)}); cerrarDia(); setTimeout(cargar,1200); }
+async function borrarTurno(id){ if(!confirm('Borrar?')) return; await fetch(API_URL,{method:'POST',mode:'no-cors',body:JSON.stringify({action:'delete',id})}); setTimeout(cargar,1000); }
+async function guardarHorario(){ let dias=[...document.querySelectorAll('#diasBox input:checked')].map(i=>parseInt(i.value)); if(!dias.length) return alert('Días?'); if(editId){ await fetch(API_URL,{method:'POST',mode:'no-cors',body:JSON.stringify({action:'deleteHorario',id:editId})}); await new Promise(r=>setTimeout(r,800)); } let h={action:'addHorario', id:editId||Date.now(), quien:miembroActual, titulo:document.getElementById('h_titulo').value, tipo:document.getElementById('h_tipo').value, dias:dias, horaInicio:document.getElementById('h_ini').value, horaFin:document.getElementById('h_fin').value, lugar:document.getElementById('h_lugar').value}; await fetch(API_URL,{method:'POST',mode:'no-cors',body:JSON.stringify(h)}); editId=null; setTimeout(cargar,1200); }
+async function borrarHorario(id){ if(!confirm('Borrar?')) return; await fetch(API_URL,{method:'POST',mode:'no-cors',body:JSON.stringify({action:'deleteHorario',id})}); setTimeout(cargar,1000); }
 cargar();
 </script>
 </body>
