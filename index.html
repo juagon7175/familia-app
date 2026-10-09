@@ -14,7 +14,7 @@ header{padding:14px 18px;display:flex;justify-content:space-between;align-items:
 .cal{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-top:10px}
 .dia{aspect-ratio:1/1;border-radius:10px;border:1px solid #f0f0f0;padding:5px;font-size:11px;cursor:pointer;background:white;overflow:hidden}
 .dia.hoy{border:2px solid #111;font-weight:800}.dia.tiene{background:#fffaf0}
-.evento{font-size:8.5px;padding:2px 4px;border-radius:5px;color:white;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.evento{font-size:8px;padding:3px 5px;border-radius:6px;color:white;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:700}
 .input{width:100%;padding:11px 12px;border-radius:12px;border:1px solid #e5e5e5;margin-top:8px;font-size:13px}
 .btn{width:100%;padding:12px;border-radius:999px;border:none;background:#111;color:white;font-weight:800;margin-top:10px;cursor:pointer}
 .item{padding:10px 12px;border-radius:12px;border:1px solid #eee;display:flex;justify-content:space-between;align-items:center;margin-top:6px}
@@ -23,12 +23,11 @@ header{padding:14px 18px;display:flex;justify-content:space-between;align-items:
 .modalBox{background:white;border-radius:20px;width:100%;max-width:440px;padding:16px;margin-top:30px}
 .diasChk{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
 .diasChk label{font-size:11px;font-weight:700;border:1px solid #e5e5e5;border-radius:999px;padding:7px 10px;cursor:pointer}
-.diasChk input{display:none}.diasChk input:checked+span{background:#111;color:white;border-color:#111;border-radius:999px;padding:7px 10px}
+.diasChk input{display:none}.diasChk input:checked+span{background:#111;color:white;border-radius:999px;padding:7px 10px}
 </style>
 </head>
 <body>
 <header><div><b>FAMILIA</b><div style="font-size:11px;opacity:.6">Cecilia · Juan · Juani · Agus · Gonza</div></div><div id="status" style="font-size:11px">● Sincronizando</div></header>
-
 <div class="grid">
 <div>
 <div class="card">
@@ -47,7 +46,6 @@ header{padding:14px 18px;display:flex;justify-content:space-between;align-items:
 <button class="btn" onclick="guardarTurno()">Guardar turno</button>
 </div>
 </div>
-
 <div>
 <div class="card">
 <div style="display:flex;justify-content:space-between;align-items:center"><h3 id="mesLabel"></h3><div><button onclick="cambiarMes(-1)" style="padding:6px 10px;border-radius:999px;border:1px solid #eee;background:white">‹</button><button onclick="cambiarMes(1)" style="padding:6px 10px;border-radius:999px;border:1px solid #eee;background:white">›</button></div></div>
@@ -63,20 +61,14 @@ header{padding:14px 18px;display:flex;justify-content:space-between;align-items:
 <hr style="margin:14px 0;border:none;border-top:1px solid #eee">
 <h4 style="font-size:13px">+ Agregar horario fijo</h4>
 <select id="h_tipo" class="input" onchange="toggleOtro()"><option value="colegio">🏫 Colegio</option><option value="futbol">⚽ Fútbol</option><option value="otro">📌 Otro</option></select>
-<input id="h_titulo" class="input" placeholder="Aclaración: Ej: Inglés, Catequesis, Guitarra" style="display:none">
+<input id="h_titulo" class="input" placeholder="Aclaración: Ej: Inglés, Catequesis" style="display:none">
 <div style="display:flex;gap:8px"><input id="h_ini" type="time" class="input"><input id="h_fin" type="time" class="input"></div>
-<input id="h_lugar" class="input" placeholder="Lugar / Cancha / Colegio">
+<input id="h_lugar" class="input" placeholder="Lugar / Cancha">
 <div style="font-size:11px;font-weight:700;margin-top:10px">¿Qué días se repite?</div>
 <div class="diasChk">
-<label><input type="checkbox" value="1"><span>LUN</span></label>
-<label><input type="checkbox" value="2"><span>MAR</span></label>
-<label><input type="checkbox" value="3"><span>MIE</span></label>
-<label><input type="checkbox" value="4"><span>JUE</span></label>
-<label><input type="checkbox" value="5"><span>VIE</span></label>
-<label><input type="checkbox" value="6"><span>SAB</span></label>
-<label><input type="checkbox" value="0"><span>DOM</span></label>
+<label><input type="checkbox" value="1"><span>LUN</span></label><label><input type="checkbox" value="2"><span>MAR</span></label><label><input type="checkbox" value="3"><span>MIE</span></label><label><input type="checkbox" value="4"><span>JUE</span></label><label><input type="checkbox" value="5"><span>VIE</span></label><label><input type="checkbox" value="6"><span>SAB</span></label><label><input type="checkbox" value="0"><span>DOM</span></label>
 </div>
-<button class="btn" onclick="guardarHorario()">Guardar horario y cargar al calendario</button>
+<button class="btn" onclick="guardarHorario()">Guardar y cargar al calendario</button>
 </div></div>
 
 <script>
@@ -85,21 +77,27 @@ const colores={Cecilia:'#ff7ab6',Juan:'#111',Juani:'#4f8cff',Agus:'#0a7d3e',Gonz
 let actividades=[], horarios=[], mesActual=new Date(); mesActual.setDate(1); let miembroActual=null;
 
 function toggleOtro(){ document.getElementById('h_titulo').style.display = document.getElementById('h_tipo').value==='otro'? 'block' : 'none'; }
-
-function abrirMiembro(nombre){
- miembroActual=nombre;
- document.getElementById('modalTitle').innerHTML=`<span class="pill ${nombre}">${nombre}</span> horarios`;
- document.getElementById('modal').classList.add('open');
- renderHorariosModal();
-}
+function abrirMiembro(nombre){ miembroActual=nombre; document.getElementById('modalTitle').innerHTML=`<span class="pill ${nombre}">${nombre}</span> horarios`; document.getElementById('modal').classList.add('open'); renderHorariosModal(); }
 function cerrar(){ document.getElementById('modal').classList.remove('open'); }
+
+function limpiaHora(v){
+  if(!v) return "";
+  v = String(v);
+  if(v.includes("1899") || v.includes("T") || v.includes("Z")){
+    let d = new Date(v);
+    if(!isNaN(d)) return d.toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit',hour12:false});
+  }
+  return v.slice(0,5);
+}
 
 function renderHorariosModal(){
  const lista = horarios.filter(h=>h.quien===miembroActual);
- document.getElementById('horariosList').innerHTML = lista.map(h=>`
-   <div class="item"><div><div style="font-size:10px;opacity:.6;font-weight:800">${h.tipo.toUpperCase()} · ${h.dias.map(d=>['DOM','LUN','MAR','MIE','JUE','VIE','SAB'][d]).join(', ')} · ${h.horaInicio}-${h.horaFin}</div>
+ document.getElementById('horariosList').innerHTML = lista.map(h=>{
+   const ini = limpiaHora(h.horaInicio); const fin = limpiaHora(h.horaFin);
+   return `<div class="item"><div><div style="font-size:10px;opacity:.6;font-weight:800">${h.tipo.toUpperCase()} · ${h.dias.map(d=>['DOM','LUN','MAR','MIE','JUE','VIE','SAB'][d]).join(', ')} · ${ini} - ${fin}</div>
    <div style="font-weight:700;font-size:13px">${h.titulo}</div><div style="font-size:11px;opacity:.6">${h.lugar||''}</div></div>
-   <button onclick="borrarHorario('${h.id}')" style="border:none;background:#f5f5f5;border-radius:999px;padding:6px 8px">✕</button></div>`).join('') || '<div style="font-size:12px;opacity:.5">Sin horarios fijos aún</div>';
+   <button onclick="borrarHorario('${h.id}')" style="border:none;background:#f5f5f5;border-radius:999px;padding:6px 8px">✕</button></div>`;
+ }).join('') || '<div style="font-size:12px;opacity:.5">Sin horarios fijos aún</div>';
 }
 
 async function cargar(){
@@ -115,9 +113,9 @@ function getEventosDelDia(fechaStr){
   const diaSem = new Date(fechaStr+'T12:00:00').getDay();
   const puntuales = actividades.filter(a=> String(a.fecha).slice(0,10)===fechaStr);
   const fijos = horarios.filter(h=> h.dias.includes(diaSem)).map(h=>({
-    id:'h_'+h.id+'_'+fechaStr, quien:h.quien, titulo:h.titulo, tipo:h.tipo, fecha:fechaStr, hora:h.horaInicio, horaFin:h.horaFin, lugar:h.lugar, esFijo:true
+    id:'h_'+h.id+'_'+fechaStr, quien:h.quien, titulo:h.titulo, tipo:h.tipo, fecha:fechaStr, hora:limpiaHora(h.horaInicio), horaFin:limpiaHora(h.horaFin), lugar:h.lugar, esFijo:true
   }));
-  return [...fijos,...puntuales].sort((a,b)=> String(a.hora||a.horaInicio).localeCompare(String(b.hora||b.horaInicio)));
+  return [...fijos,...puntuales].sort((a,b)=> String(a.hora).localeCompare(String(b.hora)));
 }
 
 function render(){
@@ -130,23 +128,27 @@ function render(){
    const fechaStr=`${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
    const evs=getEventosDelDia(fechaStr);
    const hoy = new Date().toISOString().slice(0,10)===fechaStr?' hoy':'';
-   html+=`<div class="dia${evs.length?' tiene':''}${hoy}"><b>${d}</b>${evs.slice(0,3).map(e=>`<div class="evento" style="background:${colores[e.quien]}">${(e.hora||e.horaInicio||'').slice(0,5)} ${e.tipo==='colegio'?'🏫':e.tipo==='futbol'?'⚽':''} ${e.titulo.slice(0,12)}</div>`).join('')}${evs.length>3?`<div style="font-size:9px">+${evs.length-3}</div>`:''}</div>`;
+   html+=`<div class="dia${evs.length?' tiene':''}${hoy}"><b>${d}</b>${evs.slice(0,4).map(e=>{
+     const rango = e.esFijo ? `${e.hora}-${e.horaFin}` : `${e.hora}`;
+     const icon = e.tipo==='colegio'?'🏫':e.tipo==='futbol'?'⚽':'';
+     return `<div class="evento" style="background:${colores[e.quien]}">${rango} ${icon} ${e.titulo.slice(0,10)}</div>`;
+   }).join('')}${evs.length>4?`<div style="font-size:9px">+${evs.length-4}</div>`:''}</div>`;
  }
  document.getElementById('cal').innerHTML=html;
- // lista del mes
  let todos=[]; for(let d=1;d<=diasMes;d++){ const fs=`${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`; getEventosDelDia(fs).forEach(e=> todos.push(e)); }
- todos.sort((a,b)=> String(a.fecha).localeCompare(String(b.fecha)));
- document.getElementById('lista').innerHTML = todos.map(a=>`<div class="item" style="${a.esFijo?'border-left:3px solid '+colores[a.quien]:''}"><div><div style="font-size:10px;opacity:.6;font-weight:800">${a.fecha} · ${a.hora||a.horaInicio} ${a.esFijo?'· FIJO':''} · ${a.quien}</div><div style="font-weight:700;font-size:13px">${a.tipo==='otro'?'':a.tipo+' - '}${a.titulo}</div><div style="font-size:11px;opacity:.6">${a.lugar||''}</div></div>${a.esFijo?'':`<button onclick="borrarTurno('${a.id}')" style="border:none;background:#f5f5f5;border-radius:999px;padding:6px 8px">✕</button>`}</div>`).join('') || '<div style="font-size:12px;opacity:.5">Vacío</div>';
+ todos.sort((a,b)=> String(a.fecha).localeCompare(String(b.fecha)) || String(a.hora).localeCompare(String(b.hora)));
+ document.getElementById('lista').innerHTML = todos.map(a=>{
+   const rango = a.esFijo ? `${a.hora} - ${a.horaFin}` : `${a.hora}`;
+   return `<div class="item" style="${a.esFijo?'border-left:4px solid '+colores[a.quien]:''}"><div><div style="font-size:10px;opacity:.6;font-weight:800">${a.fecha} · ${rango} ${a.esFijo?'· FIJO':''} · ${a.quien}</div><div style="font-weight:700;font-size:13px">${a.tipo==='otro'?'':a.tipo+' - '}${a.titulo}</div><div style="font-size:11px;opacity:.6">${a.lugar||''}</div></div>${a.esFijo?'':`<button onclick="borrarTurno('${a.id}')" style="border:none;background:#f5f5f5;border-radius:999px;padding:6px 8px">✕</button>`}</div>`;
+ }).join('') || '<div style="font-size:12px;opacity:.5">Vacío</div>';
 }
 function cambiarMes(d){ mesActual.setMonth(mesActual.getMonth()+d); render(); }
-
 async function guardarTurno(){
  const a={action:'add', id:Date.now(), quien:quien.value, titulo:titulo.value, tipo:'turno', fecha:fecha.value, hora:hora.value, lugar:lugar.value};
  if(!a.titulo||!a.fecha) return alert('Falta título o fecha');
  await fetch(API_URL,{method:'POST',mode:'no-cors',body:JSON.stringify(a)}); titulo.value=''; lugar.value=''; setTimeout(cargar,1200);
 }
 async function borrarTurno(id){ if(!confirm('¿Borrar?')) return; await fetch(API_URL,{method:'POST',mode:'no-cors',body:JSON.stringify({action:'delete',id})}); setTimeout(cargar,1000); }
-
 async function guardarHorario(){
  const dias = [...document.querySelectorAll('.diasChk input:checked')].map(i=>parseInt(i.value));
  if(dias.length===0) return alert('Seleccioná al menos un día');
@@ -159,8 +161,7 @@ async function guardarHorario(){
  document.getElementById('h_titulo').value=''; document.getElementById('h_lugar').value='';
  setTimeout(cargar,1200);
 }
-async function borrarHorario(id){ if(!confirm('Borrar horario fijo? Se borrará de todo el calendario')) return; await fetch(API_URL,{method:'POST',mode:'no-cors',body:JSON.stringify({action:'deleteHorario',id})}); setTimeout(cargar,1000); }
-
+async function borrarHorario(id){ if(!confirm('Borrar horario fijo?')) return; await fetch(API_URL,{method:'POST',mode:'no-cors',body:JSON.stringify({action:'deleteHorario',id})}); setTimeout(cargar,1000); }
 cargar(); document.getElementById('fecha').value = new Date().toISOString().slice(0,10);
 </script>
 </body>
